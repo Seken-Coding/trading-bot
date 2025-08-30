@@ -111,8 +111,9 @@ The bot implements a **fibonacci retracement swing trading strategy**:
 ├── .env.example               # Environment template
 ├── templates/
 │   └── dashboard.html         # Dashboard template
-├── railway.json               # Railway deployment config
-└── README.md                  # This file
+├── Dockerfile                 # Docker configuration
+├── railway.json              # Railway deployment config
+└── README.md                 # This file
 ```
 
 ### Code Quality Standards

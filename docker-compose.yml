@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: trading_bot
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading_user -d trading_bot"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Trading Bot
+  trading-bot:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: trading_bot
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+      
+      # Trading (override in .env)
+      WATCHLIST: ${WATCHLIST:-AMD,NVDA,AAPL,MSFT,GOOGL,TSLA}
+      DRY_RUN: ${DRY_RUN:-true}
+      RISK_PER_TRADE: ${RISK_PER_TRADE:-0.01}
+      CHECK_INTERVAL_SECONDS: ${CHECK_INTERVAL_SECONDS:-300}
+      
+      # Alpaca API (set in .env)
+      ALPACA_API_KEY: ${ALPACA_API_KEY}
+      ALPACA_API_SECRET: ${ALPACA_API_SECRET}
+      ALPACA_BASE_URL: ${ALPACA_BASE_URL:-https://paper-api.alpaca.markets}
+      
+      # Discord (optional, set in .env)
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL}
+    volumes:
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    command: ["python", "run.py", "bot"]
+
+  # Web Dashboard
+  dashboard:
+    build: .
+    depends_on:
+      - postgres
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: trading_bot
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    command: ["python", "run.py", "dashboard"]
+
+volumes:
+  postgres_data:

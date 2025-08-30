@@ -1,0 +1,5 @@
+alpaca-trade-api>=3.0.0
+pandas
+numpy
+ta   # optional; we'll compute RSI manually so optional
+python-dotenv  # optional for local testing
